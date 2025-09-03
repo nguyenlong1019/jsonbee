@@ -25,30 +25,55 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG_MODE', cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost',]
 
+CSRF_COOKIE_SECURE = True  # only https
+SESSION_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1', 'http://localhost',]
+
+DB_MODE = config('DB_MODE')
+if DB_MODE == 'production':
+    if config('ALLOWED_APPS'):
+        ALLOWED_HOSTS += str(config('ALLOWED_APPS')).split(',')
+    if config('ALLOWED_HOSTS'):
+        CSRF_TRUSTED_ORIGINS += str(config('ALLOWED_HOSTS')).split(',')
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize', # int comma
+    'django.contrib.sitemaps', # sitemap.xml
+    'django.contrib.sites',
+    'tinymce',
+    "corsheaders",
+    'rest_framework',
+    'core',
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware', # gzip middleware 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware", # cors middleware 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # whitenoise middleware 
 ]
 
 ROOT_URLCONF = 'jsonbee.urls'
@@ -56,7 +81,7 @@ ROOT_URLCONF = 'jsonbee.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,13 +99,24 @@ WSGI_APPLICATION = 'jsonbee.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DB_MODE == 'production':
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DB_ENGINE'),
+            'NAME': config('DB_NAME'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD')
+        }
+    }  
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -106,7 +142,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 USE_I18N = True
 
@@ -116,9 +152,251 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'public',
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# TinyMCE config 
+TINYMCE_DEFAULT_CONFIG = {
+    "height": "600px",
+    "width": "600px",
+    "menubar": "file edit view insert format tools table help",
+    "plugins": (
+        "advlist autolink lists link image charmap print preview anchor "
+        "searchreplace visualblocks code fullscreen insertdatetime media table paste help "
+        "wordcount spellchecker codesample"
+    ),
+    "toolbar": (
+        "undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | "
+        "alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist checklist | "
+        "forecolor backcolor casechange permanentpen formatpainter removeformat | pagebreak | charmap emoticons | "
+        "fullscreen  preview save print | insertfile image media pageembed template link anchor codesample | "
+        "a11ycheck ltr rtl | showcomments addcomment code"
+    ),
+    "custom_undo_redo_levels": 10,
+    "language": "en",
+}
+TINYMCE_SPELLCHECKER = True
+
+# JAZZMIN CONFIG 
+# Based on AdminLTE3, Bootstrap4, FontAwesome5 
+JAZZMIN_SETTINGS = {
+    # title of the window (Will default to current_admin_site.site_title if absent or None)
+    "site_title": "Admin Panel",
+
+    # Title on the login screen (19 chars max) (defaults to current_admin_site.site_header if absent or None)
+    "site_header": "Admin Panel",
+
+    # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
+    "site_brand": "Admin Panel",
+
+    # Logo to use for your site, must be present in static files, used for brand on top left
+    "site_logo": "./favicon/android-chrome-192x192.png",
+
+    # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
+    "login_logo": "./favicon/android-chrome-192x192.png",
+
+    # Logo to use for login form in dark themes (defaults to login_logo)
+    "login_logo_dark": "./favicon/android-chrome-192x192.png",
+
+    # CSS classes that are applied to the logo above
+    "site_logo_classes": "img-circle img-thumbnail",
+
+    # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
+    "site_icon": "./favicon/favicon.ico",
+
+    # Welcome text on the login screen
+    "welcome_sign": "Welcome to Admin Page",
+
+    # Copyright on the footer
+    "copyright": "HK2 Team, 2025",
+
+    # If you want to use a single search field you dont need to use a list, you can use a simple string 
+    "search_model": [],
+
+    # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
+    "user_avatar": None,
+
+    ############
+    # Top Menu #
+    ############
+
+    # Links to put along the top menu
+    "topmenu_links": [
+        {'name': 'Trang chủ', 'url': 'index_view', 'new_window': True},
+        {'app': 'core'}, # app with dropdown menu to all its models pages 
+    ],
+
+    #############
+    # User Menu #
+    #############
+
+    # Additional links to include in the user menu on the top right ("app" url type is not allowed)
+    "usermenu_links": [
+        {'name': 'Home', 'url': 'index_view', 'new_window': True, 'icon': 'fas fa-home'},
+    ],
+
+    #############
+    # Side Menu #
+    #############
+
+    # Whether to display the side menu
+    "show_sidebar": True,
+    # Whether to aut expand the menu
+    "navigation_expanded": True,
+    # Hide these apps when generating side menu e.g (auth)
+    "hide_apps": [], # các app muốn ẩn
+    # Hide these models when generating side menu (e.g auth.user)
+    "hide_models": [], # các model muốn ẩn đi 
+
+    # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
+    # sắp xếp thứ tự hiển thị của các app, các model 
+    "order_with_respect_to": [
+        "auth",  # auth 
+        "core", # custom core app 
+        # "core.User",
+        # "core.UserPosition",
+        # "core.Customer",
+        # "core.Employee",
+        # "core.Spa",
+        # "core.Appointment",
+        # "core.Product",
+        # "core.ProductCategory",
+        # "core.ProductType",
+        # "core.Service",
+        # "core.ServiceCategory",
+        # "core.Order",
+        # # "core.SiteInfo",
+        # "core.IPAccess",
+        # "core.EmailLog",
+        # "core.UserActionLog",
+        "sites", 
+        "contenttypes", 
+        "sessions", 
+        "admin"
+        ],
+
+    # Custom links to append to app groups, keyed on app name
+    "custom_links": { # custom link thêm vào app, custom link update product or new product
+        
+    },
+
+    # Custom icons for side menu apps/models See https://fontawesome.com/icons?d=gallery&m=free&v=5.0.0,5.0.1,5.0.10,5.0.11,5.0.12,5.0.13,5.0.2,5.0.3,5.0.4,5.0.5,5.0.6,5.0.7,5.0.8,5.0.9,5.1.0,5.1.1,5.2.0,5.3.0,5.3.1,5.4.0,5.4.1,5.4.2,5.13.0,5.12.0,5.11.2,5.11.1,5.10.0,5.9.0,5.8.2,5.8.1,5.7.2,5.7.1,5.7.0,5.6.3,5.5.0,5.4.2
+    # for the full list of 5.13.0 free icon classes
+    "icons": { # custom icon cho từng app, từng models 
+        "auth": "fas fa-users-cog", # auth app 
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        # "core.User": "fas fa-user-circle",
+        # "core.UserPosition": "fas fa-briefcase",
+        # "core.Customer": "fas fa-users",
+        # "core.Employee": "fas fa-headset",
+        # "core.Spa": "fas fa-spa",
+        # "core.Appointment": "fas fa-calendar-day",
+        # "core.Product": "fas fa-box",
+        # "core.ProductCategory": "fas fa-layer-group",
+        # "core.ProductType": "fas fa-tags",
+        # "core.Service": "fas fa-briefcase-medical",
+        # "core.ServiceCategory": "fas fa-thermometer",
+        # "core.Order": "fas fa-receipt",
+        # # "core.SiteInfo": "fas fa-cog",
+        # "core.IPAccess": "fa-solid fa-mobile-button",
+        # "core.EmailLog": "fas fa-bug",
+        # "core.UserActionLog": "fas fa-wifi",
+        "sites": "fas fa-globe", # site map 
+        "sites.Site": "fas fa-link",
+        "contenttypes": "fas fa-file", # content type app 
+        "contenttypes.ContentType": "fas fa-database",
+        "sessions": "fas fa-cookie-bite", # session app 
+        "sessions.Session": "fas fa-history",
+        "admin": "fas fa-door-closed", # admin app 
+        "admin.LogEntry": "fas fa-desktop",
+    },
+    # Icons that are used when one is not manually specified
+    "default_icon_parents": "fas fa-chevron-circle-right", # default icon cho parent (app)
+    "default_icon_children": "fas fa-circle", # default icon cho child (models)
+
+    #################
+    # Related Modal #
+    #################
+    # Use modals instead of popups
+    "related_modal_active": False, # sử dụng modal cho model relative 
+
+    #############
+    # UI Tweaks #
+    #############
+    # Relative paths to custom CSS/JS scripts (must be present in static files)
+    "custom_css": None,
+    "custom_js": None,
+    # Whether to link font from fonts.googleapis.com (use custom_css to supply font otherwise)
+    "use_google_fonts_cdn": True, 
+    # Whether to show the UI customizer on the sidebar: có hiển thị trình tùy chỉnh UI trên sidebar hay không? (mặc định là False)
+    "show_ui_builder": True,
+
+    ###############
+    # Change view #
+    ###############
+    # Render out the change view as a single form, or in tabs, current options are (các form render trong edit or new object)
+    "changeform_format": "single", # default horizontal_tabs (choices: single, horizontal_tabs, vertical_tabs, collapsible, carousel)
+    # override change forms on a per modeladmin basis
+    "changeform_format_overrides": {
+        "auth.user": "single", 
+        "auth.group": "vertical_tabs",
+        
+    },
+    # Add a language dropdown into the admin
+    # "language_chooser": True,
+} 
+# filter 
+# https://django-jazzmin.readthedocs.io/configuration/
+
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT')
+EMAIL_USE_TLS  = True 
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER 
+ADMIN_ROUTE = config('ADMIN_ROUTE')
+TEST_IP = config('TEST_IP')
+
+# CORS Config 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost',
+    'http://127.0.0.1',
+]
+
+if config('CORS_ALLOWED_ORIGINS'):
+    CORS_ALLOWED_ORIGINS += str(config('CORS_ALLOWED_ORIGINS')).split(',')
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+)
+
+CORS_ALLOW_CREDENTIALS = True # allow cookies, ... 
+
+ENABLE_IP_ACCESS_CONTROL = config('ENABLE_IP_ACCESS_CONTROL', cast=bool)
