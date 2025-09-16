@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}JSON bee - JSON Formatter and more tools like password generator{% endblock %}
 
 {% block styles %}{% endblock %}
 
@@ -83,12 +83,56 @@
 
     <div class="pt-4 lg:px-6 mx-auto max-w-screen-xl">
 
-        <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Format</button>
+        <button id="formatButton" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Format</button>
         <button type="button" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Save online</button>
         <button type="button" class="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900">Download</button>
 
     </div>
 
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    let inputJson = document.getElementById('jsonInput');
+    let outputJson = document.getElementById('jsonOutput');
+    document.getElementById('formatButton').addEventListener('click', (e) => {
+        if (!inputJson.value) {
+            alert('JSON format invalid!');
+            return;
+        }
+        
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': "{{csrf_token}}",
+            },
+            body: JSON.stringify({
+                'json_input': inputJson.value
+            }),
+            credentials: 'include'
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log(data);
+            if (data.data.jo && !data.err) {
+                outputJson.value = data.data.jo;
+                return;
+            } else {
+                alert(data.err);
+                return;
+            }
+        })
+        .catch(error => {
+            alert(error);
+            return;
+        });
+
+    });
+
+</script>
 
 {% endblock %}
