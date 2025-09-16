@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon/favicon.ico' %}">
+
+    {% block seo %}{% endblock %}
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+
+    {% block styles %}{% endblock %}
+
+</head>
+<body>
+
+    {% if messages %}
+    <div id="toast-wrapper" class="fixed top-5 right-5 z-50 space-y-2">
+        {% for message in messages %}
+        <div class="toast-message flex items-center w-full max-w-xs p-4 text-white rounded-lg shadow 
+            {% if message.tags == 'success' %} bg-green-500
+            {% elif message.tags == 'error' %} bg-red-500
+            {% elif message.tags == 'warning' %} bg-yellow-500 text-black
+            {% elif message.tags == 'info' %} bg-blue-500
+            {% else %} bg-gray-800
+            {% endif %}
+            dark:bg-gray-700"
+            role="alert"
+        >
+            <div class="flex justify-between items-center w-full">
+                <div class="text-sm font-medium">{{ message }}</div>
+                <button type="button" class="ml-4 text-white hover:text-gray-200 focus:outline-none text-lg" onclick="this.parentElement.parentElement.remove()">
+                    &times;
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% block content %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+
+    <script src="{% static 'assets/js/base.js' %}"></script>
+
+    <script>
+        function toggleTheme() {
+            // console.log("Clicked!!");
+            
+            const root = document.documentElement;
+            const sun = document.getElementById('icon-sun');
+            const moon = document.getElementById('icon-moon');            
+
+            if (root.classList.contains('dark')) {
+                root.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                sun.classList.add('hidden');
+                moon.classList.remove('hidden');
+            } else {
+                root.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                sun.classList.remove('hidden');
+                moon.classList.add('hidden');
+            }
+        }
+
+        (function () {
+            const sun = document.getElementById('icon-sun');
+            const moon = document.getElementById('icon-moon');
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                sun.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                moon.classList.remove('hidden');
+            }
+        })();
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(() => {
+                const toasts = document.querySelectorAll('.toast-message');
+                toasts.forEach(toast => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.5s ease-in-out';
+                    setTimeout(() => toast.remove(), 500); // Xoá khỏi DOM sau khi fade
+                });
+            }, 3500);
+        });
+    </script>
+
+</body>
+</html>
