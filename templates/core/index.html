@@ -47,7 +47,7 @@
                 </div>
                 <div class="px-4 py-2 bg-white rounded-b-lg dark:bg-gray-800">
                     <label for="jsonInput" class="sr-only">Publish post</label>
-                    <textarea rows="32" id="jsonInput" class="block w-full px-0 text-sm text-gray-800 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400" placeholder="JSON, Python Dict Input" required ></textarea>
+                    <textarea rows="32" id="jsonInput" class="block w-full px-0 text-sm text-gray-800 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400" placeholder="JSON, Python Dict Input" required >{% if request.session.last_input %}{{request.session.last_input}}{% endif %}</textarea>
                 </div>
             </div>
         </div>
