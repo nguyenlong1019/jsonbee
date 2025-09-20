@@ -38,38 +38,4 @@ class CoreUtilsMixin:
         if extra and isinstance(extra, dict):
             default_response.update(**extra)
         return default_response
-    
-
-    @staticmethod 
-    def smart_json_parse(json_input: str):
-        """
-        Try to parse a slightly malformed JSON string by auto-fixing common issues.
-        Return False if fails
-        """
-        fixed_input = json_input
-
-        # Step 1: Fix common unescaped double quote inside value 
-        fixed_input = re.sub(
-            r'("formatted_value"\s*:\s*)"([^"]+)"\s*\(([^)]+)\)"',
-            lambda m: f'{m[1]}"{m[2]} ({m[3]})"',
-            fixed_input
-        )
-
-        # Step 2: Remove any control characters (like \x00 - \x1F)
-        fixed_input = re.sub(r'[\x00-\x1f]+', '', fixed_input)
-
-        # Step 3: Escape standalone unescaped backslashes 
-        fixed_input = re.sub(r'(?<!\\)\\(?![\\/"bfnrtu])', r'\\\\', fixed_input)
-
-        # Step 4: Escape quotes inside values if needed 
-        def escape_quotes_in_values(match):
-            key = match.group(1)
-            value = match.group(2)
-            value = value.replace('"', '\\"')  # escape all quotes inside
-            return f'"{key}": "{value}"'
-    
-        try:
-            return json.loads(fixed_input)
-        except Exception as e:
-            return False 
 

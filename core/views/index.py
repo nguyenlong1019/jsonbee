@@ -30,9 +30,7 @@ class IndexView(View, CoreUtilsMixin):
             try:
                 parsed_dict = json.loads(json_input)
             except Exception as e:
-                parsed_dict = self.smart_json_parse(json_input)
-                if not parsed_dict:
-                    return JsonResponse(self.build_json_response(err=f"Invalid json or python dict: {str(e)}"), status=400)
+                return JsonResponse(self.build_json_response(err=f"Invalid json or python dict: {str(e)}"), status=400)
 
         formatted_json = json.dumps(parsed_dict, indent=4, ensure_ascii=False, default=str)
 
